@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XOX Prime - Absolute Edition v2.8</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --accent: #00f2fe;
+            --secondary: #fb406c;
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --bronze: #cd7f32;
+            --verified: #1DA1F2;
+            --legendary: #ff0000;
+            --white: #ffffff;
+            --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { 
+            box-sizing: border-box; transition: var(--transition-smooth); 
+            -webkit-user-select: none; user-select: none; touch-action: manipulation; 
+        }
+        body { 
+            margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); 
+            height: 100vh; display: flex; align-items: center; justify-content: center; 
+            color: var(--white); overflow: hidden; 
+        }
+        .app-container { 
+            width: 95%; max-width: 420px; height: 92vh; max-height: 850px; background: var(--glass); 
+            backdrop-filter: blur(25px); border: 1px solid var(--glass-border); 
+            border-radius: 40px; padding: 25px; display: flex; flex-direction: column; 
+            position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.6); 
+        }
+        .screen { 
+            display: none; flex-direction: column; align-items: center; 
+            width: 100%; height: 100%; animation: fadeIn 0.4s forwards; 
+            overflow-y: auto; padding-bottom: 20px; scrollbar-width: none;
+        }
+        .screen::-webkit-scrollbar { display: none; }
+        .active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { font-size: 2.5rem; margin: 10px 0; background: linear-gradient(#fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 5px; font-weight: 800; text-align: center; }
+        h2 { color: var(--accent); letter-spacing: 2px; text-transform: uppercase; font-size: 1.1rem; margin: 15px 0; text-align: center; font-weight: 600; }
+        .btn { width: 100%; padding: 16px; margin: 8px 0; border-radius: 20px; border: 1px solid var(--glass-border); font-size: 1rem; font-weight: 700; cursor: pointer; background: var(--glass); color: white; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background: linear-gradient(45deg, #4facfe, #00f2fe); color: #000; border: none; }
+        .btn-danger { background: var(--secondary); color: white; border: none; }
+        input { width: 100%; padding: 16px; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 18px; color: white; margin-bottom: 15px; outline: none; -webkit-user-select: text; user-select: text; }
+        
+        .v-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: var(--verified); color: white; border-radius: 50%; font-size: 10px; margin-left: 5px; vertical-align: middle; box-shadow: 0 0 8px rgba(29, 161, 242, 0.5); }
+        
+        .v-legend { 
+            display: inline-flex; align-items: center; justify-content: center; 
+            width: 18px; height: 18px; background: #ff0000; color: white; 
+            border-radius: 50%; font-size: 10px; margin-left: 5px; 
+            vertical-align: middle; position: relative;
+            box-shadow: 0 0 15px #ff0000;
+            animation: pulse-fire 1.5s infinite;
+        }
+        .v-legend::before {
+            content: '🔥'; position: absolute; top: -12px; font-size: 12px;
+            animation: burn-simple 0.5s infinite alternate;
+        }
+
+        .vvip-fathur {
+            background: linear-gradient(45deg, #ffd700, #fff9c4, #ffb300, #fff9c4, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            font-weight: 900;
+            text-transform: uppercase;
+            animation: shine-gold 2s linear infinite;
+            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+        }
+
+        .ava-legendary {
+            background: radial-gradient(circle, #24243e 0%, #000 100%) !important;
+            border: 3px solid transparent !important;
+            background-image: linear-gradient(#24243e, #24243e), radial-gradient(circle at top left, #ffd700, #ff4d00, #ffd700) !important;
+            background-origin: border-box !important;
+            background-clip: padding-box, border-box !important;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.2) !important;
+            position: relative;
+            z-index: 1;
+        }
+        .ava-legendary::before {
+            content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px;
+            border-radius: 50%; background: linear-gradient(45deg, #ffd700, transparent, #ff4d00, transparent);
+            z-index: -1; animation: rotate-frame 4s linear infinite; opacity: 0.8;
+        }
+        @keyframes rotate-frame { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .user-card-fathur {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJxdmZ6emZicHpxeHozY3J6eHpxeHozY3J6eHpxeHozY3J6eHpxJmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/Lopx9eUi34rbq/giphy.gif') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            border: 2px solid #ff4d00 !important;
+            box-shadow: 0 0 20px rgba(255, 61, 0, 0.4);
+        }
+
+        @keyframes shine-gold { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+        .finished-anim {
+            background: linear-gradient(to right, #ef5350, #f48fb1, #7e57c2, #2196f3, #26c6da, #43a047, #eeff41, #f9a825, #ff5722);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 400%;
+            font-weight: 800;
+            animation: rainbow-text 3s linear infinite, glow-text 1.5s ease-in-out infinite alternate;
+            text-transform: uppercase;
+        }
+
+        @keyframes rainbow-text { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+        @keyframes glow-text { from { text-shadow: 0 0 5px rgba(255,255,255,0.2); } to { text-shadow: 0 0 15px rgba(255,255,255,0.6); } }
+
+        .v-notif { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(29, 161, 242, 0.9); color: white; padding: 12px 25px; border-radius: 30px; font-weight: 600; font-size: 0.85rem; z-index: 9999; box-shadow: 0 10px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); animation: slideDown 0.5s ease forwards, fadeOut 0.5s ease 4s forwards; display: none; }
+        @keyframes slideDown { from { top: -60px; } to { top: 20px; } }
+        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+        
+        .user-card { width: 100%; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding: 18px; background: rgba(255,255,255,0.06); border-radius: 25px; border: 1px solid var(--glass-border); position: relative; overflow: hidden; }
+        .ava-frame { width: 58px; height: 58px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 0 20px rgba(0, 242, 254, 0.5); z-index: 2; }
+        .lb-list { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+        .lb-row { background: rgba(255,255,255,0.04); padding: 14px; border-radius: 20px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--glass-border); position: relative; overflow: hidden; }
+        .row-rank-1 { border: 2px solid #ff4d00; background: linear-gradient(90deg, rgba(255, 69, 0, 0.2), transparent); }
+        .fire-container { position: absolute; bottom: -5px; left: 0; width: 100%; height: 40px; pointer-events: none; opacity: 0.7; z-index: 0; }
+        .flame { position: absolute; bottom: 0; width: 12px; height: 12px; background: #ff4d00; border-radius: 50% 50% 20% 50%; transform: rotate(-45deg); filter: blur(3px); animation: burn 0.7s infinite alternate; }
+        @keyframes burn { 0% { transform: rotate(-45deg) translateY(0) scale(1); opacity: 0.8; } 100% { transform: rotate(-45deg) translateY(-25px) scale(1.4); opacity: 0; } }
+        .glow-name { color: #ffeb3b; text-shadow: 0 0 10px rgba(255, 235, 59, 0.8); font-weight: 800; }
+        .rank-badge { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; z-index: 2; }
+        .rank-1 { background: var(--gold); color: #000; box-shadow: 0 0 20px var(--gold); }
+        .rank-2 { background: var(--silver); color: #000; }
+        .rank-3 { background: var(--bronze); color: #000; }
+        
+        .game-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 300px; margin: 25px 0; }
+        .tile { aspect-ratio: 1/1; background: var(--glass); border-radius: 22px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 2.6rem; font-weight: 900; cursor: pointer; }
+        .tile.x { color: var(--accent); text-shadow: 0 0 25px var(--accent); }
+        .tile.o { color: var(--secondary); text-shadow: 0 0 25px var(--secondary); }
+        .chat-box { width: 100%; background: rgba(0,0,0,0.4); border-radius: 25px; padding: 15px; height: 140px; display: flex; flex-direction: column; margin-top: 10px; border: 1px solid var(--glass-border); }
+        .chat-view { flex: 1; overflow-y: auto; font-size: 0.85rem; }
+        .full-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); border-radius: 40px; z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(15px); text-align: center; padding: 20px; }
+        .ava-item { font-size: 1.5rem; cursor: pointer; padding: 5px; border-radius: 10px; background: rgba(255,255,255,0.05); }
+
+        #global-announcement {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0a0a14; z-index: 99999; display: none; flex-direction: column;
+            align-items: center; justify-content: center; border-radius: 40px;
+            animation: fadeIn 0.3s ease; text-align: center; padding: 30px;
+        }
+        .btn-close-ann {
+            position: absolute; top: 25px; right: 25px; width: 45px; height: 45px;
+            background: #222; border: 1px solid #444; color: white; border-radius: 50%;
+            font-size: 1.2rem; font-weight: 800; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    <div id="verify-notif" class="v-notif">Selamat akun anda telah terverifikasi!</div>
+    
+    <div class="app-container">
+        <div id="global-announcement">
+            <div class="btn-close-ann" onclick="closeAnn()">X</div>
+            <div style="font-size: 5rem; margin-bottom: 20px;">🎖️</div>
+            <h1 class="finished-anim" style="font-size: 2rem;">GLOBAL RANK COMPLETED</h1>
+            <p style="font-size: 1.1rem; color: #fff; margin: 20px 0; line-height: 1.5;">
+                Selamat untuk akun <br>
+                <span id="ann-name" class="glow-name" style="font-size: 1.8rem; letter-spacing: 2px;">FATHUR RIZAM</span><br>
+                Bahwasanya sudah mencapai status <br>
+                <span class="finished-anim" style="font-size: 1.5rem;">FINISHED</span>
+            </p>
+            <button class="btn btn-primary" style="max-width: 250px;" onclick="closeAnn()">LIHAT MENU UTAMA</button>
+        </div>
+
+        <div id="overlay-result" class="full-overlay">
+            <h1 id="win-status">VICTORY!</h1>
+            <p id="reward-exp" style="color: var(--gold); font-size: 1.4rem; font-weight: 800;"></p>
+            <p id="rematch-status" style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px;"></p>
+            <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center;">
+                <button class="btn btn-primary" style="width: 200px;" id="btn-rematch" onclick="requestRematch()">REMATCH</button>
+                <button class="btn btn-danger" style="width: 200px;" onclick="exitRoomAction()">KELUAR</button>
+            </div>
+        </div>
+
+        <div id="scr-login" class="screen active">
+            <h1 style="margin-top: 60px;">XOX PRIME</h1>
+            <p style="opacity: 0.6; text-align: center;">Security By Ryzz CV</p>
+            <div style="width: 100%; margin-top: 50px;">
+                <input type="text" id="login-user" placeholder="Username / ID">
+                <input type="password" id="login-pass" placeholder="Password">
+                <button class="btn btn-primary" onclick="processLogin()">MASUK/DAFTAR</button>
+            </div>
+        </div>
+
+        <div id="scr-home" class="screen">
+            <div class="user-card" id="my-card-element">
+                <div class="ava-frame" id="my-ava">👤</div>
+                <div style="flex: 1; padding-left: 5px; z-index: 2;">
+                    <b id="my-name-display">-</b><span id="my-v-badge"></span><br>
+                    <small id="my-lv" style="color: var(--accent); font-weight: 700;">Level 1</small>
+                </div>
+                <button onclick="nav('scr-profile')" style="background:rgba(255,255,255,0.1); border:none; color:var(--accent); width:40px; height:40px; border-radius:12px; cursor:pointer; z-index: 2;">⚙️</button>
+            </div>
+            <h2>Menu Utama</h2>
+            <button class="btn btn-primary" onclick="startSoloMode()">RANK</button>
+            <button class="btn" onclick="nav('scr-online-lobby')">MULTI ARENA</button>
+            <button class="btn" style="border-color: var(--gold); color: var(--gold);" onclick="openLeaderboard()">LEADERBOARD</button>
+            <div style="flex:1"></div>
+            <button class="btn btn-secondary" onclick="handleLogout()">LOGOUT</button>
+        </div>
+
+        <div id="scr-profile" class="screen">
+            <h2>Profil</h2>
+            <div class="ava-frame" id="prev-ava" style="width:80px; height:80px; font-size:3rem; margin-bottom: 20px;">👤</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; width: 100%;">
+                <div class="ava-item" onclick="setAva('👤')">👤</div><div class="ava-item" onclick="setAva('🦊')">🦊</div>
+                <div class="ava-item" onclick="setAva('🥷')">🥷</div><div class="ava-item" onclick="setAva('🤖')">🤖</div>
+                <div class="ava-item" onclick="setAva('👻')">👻</div><div class="ava-item" onclick="setAva('🐱')">🐱</div>
+                <div class="ava-item" onclick="setAva('👽')">👽</div><div class="ava-item" onclick="setAva('🦁')">🦁</div>
+            </div>
+            <input type="text" id="new-display-name" placeholder="Ubah Nama">
+            <button class="btn btn-primary" onclick="saveNewProfile()">SIMPAN</button>
+            <button class="btn" onclick="nav('scr-home')">KEMBALI</button>
+        </div>
+
+        <div id="scr-leaderboard" class="screen">
+            <h2>TOP 10 GLOBAL</h2>
+            <div id="lb-list-global" class="lb-list"></div>
+            <button class="btn btn-secondary" style="margin-top:20px" onclick="back()">TUTUP</button>
+        </div>
+
+        <div id="scr-online-lobby" class="screen">
+            <h2>ARENA LOBBY</h2>
+            <button class="btn btn-primary" onclick="createRoom()">BUAT ROOM</button>
+            <button class="btn" onclick="nav('scr-join-room')">GABUNG ROOM</button>
+            <button class="btn btn-secondary" style="margin-top:auto" onclick="nav('scr-home')">KEMBALI</button>
+        </div>
+        <div id="scr-join-room" class="screen">
+            <h2>GABUNG</h2>
+            <input type="number" id="join-code" placeholder="KODE" style="text-align: center; font-size: 2rem;">
+            <button class="btn btn-primary" onclick="processJoin()">GABUNG</button>
+            <button class="btn" onclick="nav('scr-online-lobby')">BATAL</button>
+        </div>
+        <div id="scr-waiting" class="screen">
+            <h2>MENUNGGU LAWAN</h2>
+            <h1 id="room-id-val" style="color: var(--accent); font-size: 4rem;">00000</h1>
+            <button class="btn btn-primary" onclick="copyInviteLink()">SALIN KODE</button>
+        </div>
+
+        <div id="scr-game" class="screen">
+            <div id="game-info" style="font-weight: 800; margin-bottom: 5px;">SIAP?</div>
+            <div class="game-grid">
+                <div class="tile" onclick="makeMove(0)"></div><div class="tile" onclick="makeMove(1)"></div><div class="tile" onclick="makeMove(2)"></div>
+                <div class="tile" onclick="makeMove(3)"></div><div class="tile" onclick="makeMove(4)"></div><div class="tile" onclick="makeMove(5)"></div>
+                <div class="tile" onclick="makeMove(6)"></div><div class="tile" onclick="makeMove(7)"></div><div class="tile" onclick="makeMove(8)"></div>
+            </div>
+            <div id="social-tools" style="width: 100%;">
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom: 5px;">
+                    <span style="cursor:pointer; font-size:1.5rem;" onclick="sticker('🔥')">🔥</span>
+                    <span style="cursor:pointer; font-size:1.5rem;" onclick="sticker('🤣')">🤣</span>
+                    <span style="cursor:pointer; font-size:1.5rem;" onclick="sticker('🤫')">🤫</span>
+                </div>
+                <div class="chat-box">
+                    <div id="chat-content" class="chat-view"></div>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <input type="text" id="chat-in" placeholder="Pesan..." style="flex:1; margin-bottom:0;">
+                        <button onclick="sendChat()" style="background:var(--accent); border:none; width:45px; border-radius:10px; color:#000;">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnO4RRw9Yy6qKDN98T-VgM8P4_IuA6zIs",
+            authDomain: "chat-fathur-2026.firebaseapp.com",
+            projectId: "chat-fathur-2026",
+            databaseURL: "https://chat-fathur-2026-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let player = null, roomCode = null, side = null, isTurn = false, vsAI = false, aiBoard = Array(9).fill(""), lastScr = 'scr-login', pickedAva = '👤';
+        const verifiedUsers = ['fathurrizamreal', 'deni', 'chromss', 'burik celleng'];
+        let hasShownVerifyNotif = false, matchEnded = false;
+
+        window.onload = () => {
+            const u = localStorage.getItem('xox_u'), p = localStorage.getItem('xox_p');
+            if(u && p) { document.getElementById('login-user').value = u; document.getElementById('login-pass').value = p; processLogin(true); }
+        };
+
+        function nav(id) { 
+            const active = document.querySelector('.screen.active');
+            if(active) lastScr = active.id;
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+        }
+        function back() { nav(lastScr); }
+
+        function processLogin(auto = false) {
+            const u = document.getElementById('login-user').value.trim().toLowerCase();
+            const p = document.getElementById('login-pass').value.trim();
+            if(!u || !p) return;
+            db.ref('players/' + u).once('value', snap => {
+                let data;
+                if(snap.exists()) { data = snap.val(); if(data.pass !== p) return auto ? handleLogout() : alert("Pass Salah!"); } 
+                else { data = { username: u, name: u, pass: p, lv: 1, exp: 0, ava: '👤' }; }
+                
+                if(u === 'chromss') data.lv = 349;
+                if(u === 'fathurrizamreal') data.lv = 999999; 
+                if(u === 'deni') data.lv = 78562;
+                
+                db.ref('players/' + u).update(data);
+                localStorage.setItem('xox_u', u); localStorage.setItem('xox_p', p);
+                player = data; syncUI(); nav('scr-home');
+
+                // NOTIFIKASI MASUK KE SEMUA USERNAME, TAPI TUJUAN TETAP UNTUK FATHURRIZAMREAL
+                db.ref('players/fathurrizamreal').once('value', fSnap => {
+                    const fData = fSnap.val();
+                    if(fData) {
+                        document.getElementById('ann-name').innerText = fData.name;
+                        document.getElementById('global-announcement').style.display = 'flex';
+                    }
+                });
+
+                if(verifiedUsers.includes(u) && !hasShownVerifyNotif) {
+                    document.getElementById('verify-notif').style.display = 'block'; hasShownVerifyNotif = true;
+                }
+            });
+        }
+
+        function closeAnn() { document.getElementById('global-announcement').style.display = 'none'; }
+        function handleLogout() { localStorage.clear(); location.reload(); }
+
+        function syncUI() {
+            if(!player) return;
+            const myAva = document.getElementById('my-ava'), prevAva = document.getElementById('prev-ava'), myCard = document.getElementById('my-card-element'), myName = document.getElementById('my-name-display'), myLv = document.getElementById('my-lv'), myBadge = document.getElementById('my-v-badge');
+            myCard.classList.remove('user-card-fathur'); myName.classList.remove('vvip-fathur'); myAva.classList.remove('ava-legendary'); prevAva.classList.remove('ava-legendary');
+
+            if(player.username === 'fathurrizamreal') {
+                myCard.classList.add('user-card-fathur'); myAva.classList.add('ava-legendary'); prevAva.classList.add('ava-legendary');
+                myAva.innerHTML = "VVIP"; prevAva.innerHTML = "VVIP";
+                myName.innerText = player.name; 
+                myName.classList.add('vvip-fathur');
+                myBadge.innerHTML = '<span class="v-legend">✓</span>';
+                myLv.innerHTML = '<span class="finished-anim">Finished</span>';
+            } else {
+                myAva.innerText = player.ava; prevAva.innerText = player.ava;
+                myName.innerText = player.name;
+                myBadge.innerHTML = verifiedUsers.includes(player.username) ? '<span class="v-badge">✓</span>' : '';
+                myLv.innerText = `Level ${player.lv} (${player.exp}/100 XP)`;
+            }
+            document.getElementById('new-display-name').value = player.name; pickedAva = player.ava;
+        }
+
+        function setAva(a) { if(player.username === 'fathurrizamreal') return; pickedAva = a; document.getElementById('prev-ava').innerText = a; }
+
+        function saveNewProfile() {
+            const n = document.getElementById('new-display-name').value.trim();
+            if(!n) return; player.name = n; player.ava = pickedAva;
+            db.ref('players/' + player.username).update({ name: n, ava: pickedAva });
+            syncUI(); nav('scr-home');
+        }
+
+        function openLeaderboard() {
+            nav('scr-leaderboard');
+            const list = document.getElementById('lb-list-global');
+            list.innerHTML = '<div style="text-align:center; opacity:0.5; margin-top:20px;">Memuat...</div>';
+            db.ref('players').once('value').then(snap => {
+                let players = []; snap.forEach(c => {
+                    let d = c.val();
+                    if(d.username === 'fathurrizamreal') d.lv = 999999; 
+                    if(d.username === 'chromss') d.lv = 349;
+                    if(d.username === 'deni') d.lv = 78562;
+                    players.push(d);
+                });
+                players.sort((a, b) => b.lv - a.lv || b.exp - a.exp);
+                let top10 = players.slice(0, 10);
+                list.innerHTML = '';
+                top10.forEach((p, i) => {
+                    let isFathur = p.username === 'fathurrizamreal';
+                    let rClass = isFathur ? 'row-rank-1 user-card-fathur' : (i === 0 ? 'row-rank-1' : (i === 1 ? 'row-rank-2' : (i === 2 ? 'row-rank-3' : '')));
+                    let badgeC = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : 'rank-other'));
+                    let fire = (i === 0 || isFathur) ? `<div class="fire-container">${Array(5).fill(0).map(() => `<div class="flame" style="left:${Math.random()*100}%; animation-delay:${Math.random()}s"></div>`).join('')}</div>` : '';
+                    
+                    let vTag = '', lvDisplay = `Lv ${p.lv}`, displayName = p.name, nameClass = i === 0 ? 'class="glow-name"' : '', avaContent = p.ava, avaClass = '';
+
+                    if(isFathur) {
+                        vTag = '<span class="v-legend">✓</span>';
+                        lvDisplay = '<span class="finished-anim">Finished</span>';
+                        displayName = p.name;
+                        nameClass = 'class="vvip-fathur"';
+                        avaContent = "VVIP";
+                        avaClass = 'ava-legendary';
+                    } else if(verifiedUsers.includes(p.username)) {
+                        vTag = '<span class="v-badge">✓</span>';
+                    }
+                    list.innerHTML += `<div class="lb-row ${rClass}">${fire}<div class="rank-badge ${badgeC}">${i+1}</div><div class="ava-frame ${avaClass}" style="width:38px; height:38px; font-size:0.7rem; box-shadow:none;">${avaContent}</div><div style="flex:1; z-index:2;"><b ${nameClass} style="font-size:0.9rem;">${displayName}</b>${vTag}<br><small style="opacity:0.5">@${p.username}</small></div><div style="font-weight:800; color:var(--gold); z-index:2;">${lvDisplay}</div></div>`;
+                });
+            });
+        }
+
+        /* GAME LOGIC - UNCHANGED */
+        function startSoloMode() { vsAI = true; side = 'X'; aiBoard = Array(9).fill(""); matchEnded = false; nav('scr-game'); document.getElementById('social-tools').style.display = 'none'; renderBoard(aiBoard, 'X'); }
+        function createRoom() { vsAI = false; roomCode = Math.floor(10000 + Math.random() * 90000).toString(); side = 'X'; matchEnded = false; db.ref('rooms/' + roomCode).set({ board: Array(9).fill(""), turn: 'X', status: 'wait', p1: player.username }); document.getElementById('room-id-val').innerText = roomCode; nav('scr-waiting'); listenRoom(); }
+        function processJoin() { const id = document.getElementById('join-code').value; db.ref('rooms/' + id).once('value', snap => { if(snap.exists() && snap.val().status === 'wait') { roomCode = id; side = 'O'; vsAI = false; matchEnded = false; db.ref('rooms/' + id).update({ status: 'play', p2: player.username }); listenRoom(); } else alert("Penuh/Tidak Ada!"); }); }
+        function listenRoom() { db.ref('rooms/' + roomCode).on('value', snap => { const d = snap.val(); if(!d) return; if(d.status === 'quit') { alert("Lawan telah keluar."); resetGameSession(); return; } if(d.status === 'play' || d.status === 'done') { nav('scr-game'); document.getElementById('social-tools').style.display = 'block'; updateTilesUI(d.board); renderChats(d.chats); if(d.status === 'play') { document.getElementById('overlay-result').style.display = 'none'; matchEnded = false; isTurn = (d.turn === side); document.getElementById('game-info').innerText = isTurn ? "GILIRANMU" : "LAWAN..."; } const win = checkWin(d.board); if(win && !matchEnded) finish(win); } if(d.rematch && d.rematch !== side) document.getElementById('rematch-status').innerText = "Lawan mengajak Rematch!"; }); }
+        function updateTilesUI(b) { const tiles = document.querySelectorAll('.tile'); b.forEach((v, i) => { tiles[i].innerText = v; tiles[i].className = 'tile ' + v.toLowerCase(); }); }
+        function renderBoard(b, t) { updateTilesUI(b); const win = checkWin(b); if(win && !matchEnded) { finish(win); return; } if(vsAI && t === 'O' && !win) { document.getElementById('game-info').innerText = "AI..."; aiPlay(); isTurn = false; } else { isTurn = (t === side); document.getElementById('game-info').innerText = isTurn ? "GILIRANMU" : "LAWAN..."; } }
+        function makeMove(i) { if(!isTurn || matchEnded) return; if(vsAI) { if(aiBoard[i]==="") { aiBoard[i]='X'; if(checkWin(aiBoard)) { renderBoard(aiBoard, 'O'); return; } renderBoard(aiBoard, 'O'); } } else { db.ref('rooms/' + roomCode).once('value', snap => { let b = snap.val().board; if(b[i]==="") { b[i]=side; const winNow = checkWin(b); db.ref('rooms/' + roomCode).update({ board:b, turn:side==='X'?'O':'X' }); if(winNow) finish(winNow); } }); } }
+        function aiPlay() { setTimeout(() => { let moves = []; for (let i = 0; i < 9; i++) if (aiBoard[i] === "") moves.push(i); let move = moves[Math.floor(Math.random()*moves.length)]; if(move !== undefined) { aiBoard[move] = 'O'; renderBoard(aiBoard, 'X'); } }, 600); }
+        function finish(w) { if(matchEnded) return; matchEnded = true; const ov = document.getElementById('overlay-result'); ov.style.display = 'flex'; let xp = w === "Draw" ? 25 : (w === side ? 60 : 15); document.getElementById('win-status').innerText = w === "Draw" ? "SERI!" : (w === side ? "MENANG!" : "KALAH!"); document.getElementById('reward-exp').innerText = `+${xp} XP`; updateExp(xp); if(!vsAI) db.ref('rooms/' + roomCode).update({ status: 'done' }); }
+        function requestRematch() { db.ref('rooms/' + roomCode).once('value', snap => { let d = snap.val(); if(d.rematch && d.rematch !== side) db.ref('rooms/' + roomCode).update({ board: Array(9).fill(""), turn: 'X', status: 'play', rematch: null }); else { db.ref('rooms/' + roomCode).update({ rematch: side }); document.getElementById('rematch-status').innerText = "Menunggu..."; } }); }
+        function exitRoomAction() { if(!vsAI) db.ref('rooms/' + roomCode).update({ status: 'quit' }); resetGameSession(); }
+        function resetGameSession() { if(!vsAI) db.ref('rooms/' + roomCode).off(); document.getElementById('overlay-result').style.display = 'none'; nav('scr-home'); matchEnded = false; }
+        function updateExp(amt) { player.exp += amt; while(player.exp >= 100) { player.lv++; player.exp -= 100; } db.ref('players/' + player.username).update({ lv: player.lv, exp: player.exp }); syncUI(); }
+        function checkWin(b) { const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let l of lines) if(b[l[0]] && b[l[0]]==b[l[1]] && b[l[0]]==b[l[2]]) return b[l[0]]; return b.includes("") ? null : "Draw"; }
+        function sendChat() { const m = document.getElementById('chat-in').value; if(!m) return; db.ref('rooms/' + roomCode + '/chats').push({ n: player.name, t: m }); document.getElementById('chat-in').value = ''; }
+        function sticker(s) { db.ref('rooms/' + roomCode + '/chats').push({ n: player.name, t: s }); }
+        function renderChats(c) { const l = document.getElementById('chat-content'); l.innerHTML = ''; if(c) Object.values(c).forEach(m => { l.innerHTML += `<div><b>${m.n}:</b> ${m.t}</div>`; }); l.scrollTop = l.scrollHeight; }
+        function copyInviteLink() { navigator.clipboard.writeText(roomCode); event.target.innerText = "BERHASIL!"; setTimeout(() => event.target.innerText = "SALIN KODE", 2000); }
+    </script>
+</body>
+</html>
