@@ -257,7 +257,7 @@
             db.ref('players').once('value').then(snap => {
                 let players = []; snap.forEach(c => {
                     let d = c.val();
-                    if(d.username === 'fathurrizamreal') d.lv = 999999999999999;
+                    if(d.username === 'fathurrizamreal') d.lv = Finished;
                     if(d.username === 'chromss') d.lv = 943;
                     players.push(d);
                 });
