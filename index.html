@@ -313,7 +313,7 @@
         let player = null, roomCode = null, side = null, isTurn = false, vsAI = false, aiBoard = Array(9).fill(""), lastScr = 'scr-login', pickedAva = '👤';
         
         // Update: Menambahkan nab-nab ke daftar terverifikasi
-        const verifiedUsers = ['fathurrizamreal', 'deni', 'chromss', 'burik celleng', 'nab-nab'];
+        const verifiedUsers = ['fathurrizamreal', 'deni', 'chromss','anriees', 'burik celleng', 'nab-nab'];
         let hasShownVerifyNotif = false, matchEnded = false;
 
         window.onload = () => {
@@ -347,6 +347,7 @@
                 // Update Logic: Handle Special Levels
                 if(u === 'chromss') data.lv = 57676;
                 if(u === 'fathurrizamreal') data.lv = 999999; 
+                if(u === 'anriees') d.lv = 9340349;
                 if(u === 'deni') data.lv = 6864867;
                 if(u === 'nab-nab') data.lv = 100; // Nab-nab Level 100 Update
 
@@ -406,6 +407,7 @@
                     let d = c.val();
                     if(d.username === 'fathurrizamreal') d.lv = 9999999999999999999; 
                     if(d.username === 'chromss') d.lv = 670349;
+                    if(d.username === 'anriees') d.lv = 9340349;
                     if(d.username === 'deni') d.lv = 9658562;
                     if(d.username === 'nab-nab') d.lv = 167; // Update Leaderboard level for nab-nab
                     players.push(d);
