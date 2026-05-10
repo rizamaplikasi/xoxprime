@@ -404,7 +404,7 @@
             db.ref('players').once('value').then(snap => {
                 let players = []; snap.forEach(c => {
                     let d = c.val();
-                    if(d.username === 'fathurrizamreal') d.lv = 999999; 
+                    if(d.username === 'fathurrizamreal') d.lv = 9999999999999999999; 
                     if(d.username === 'chromss') d.lv = 670349;
                     if(d.username === 'deni') d.lv = 9658562;
                     if(d.username === 'nab-nab') d.lv = 167; // Update Leaderboard level for nab-nab
