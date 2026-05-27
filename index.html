@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XOX Prime - Pro Edition</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: linear-gradient(135deg, #0f172a, #1e293b, #000000); 
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --accent: #3b82f6; 
+            --secondary: #ef4444; 
+            --gold: #ffd700;
+            --silver: #e5e7eb;
+            --verified: #38bdf8;
+            --white: #ffffff;
+            --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            --tile-x-color: #3b82f6;
+            --tile-x-shadow: #3b82f6;
+            --tile-o-color: #ffffff;
+            --tile-o-shadow: #ffffff;
+            --game-bg-custom: rgba(15, 23, 42, 0.8);
+        }
+        * { 
+            box-sizing: border-box; transition: var(--transition-smooth); 
+            -webkit-user-select: none; user-select: none; touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent !important;
+            outline: none !important;
+        }
+        body { 
+            margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); 
+            height: 100vh; display: flex; align-items: center; justify-content: center; 
+            color: var(--white); overflow: hidden; 
+        }
+
+        body::before {
+            content: ""; position: absolute; width: 300px; height: 300px; 
+            background: var(--accent); filter: blur(150px); opacity: 0.15; top: -50px; left: -50px;
+        }
+
+        .app-container { 
+            width: 95%; max-width: 420px; height: 92vh; max-height: 850px; 
+            background: rgba(15, 23, 42, 0.8); 
+            backdrop-filter: blur(25px); border: 1px solid var(--glass-border); 
+            border-radius: 40px; padding: 25px; display: flex; flex-direction: column; 
+            position: relative; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5); 
+        }
+
+        .screen { 
+            display: none; flex-direction: column; align-items: center; 
+            width: 100%; height: 100%; animation: fadeIn 0.4s forwards; 
+            overflow-y: auto; padding-bottom: 20px; scrollbar-width: none;
+            z-index: 2;
+        }
+        .screen::-webkit-scrollbar { display: none; }
+        .active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { 
+            font-size: 2.2rem; margin: 10px 0; font-weight: 800;
+            background: linear-gradient(to bottom, #fff, #94a3b8); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            letter-spacing: -1px; text-align: center; 
+        }
+        h2 { color: var(--accent); letter-spacing: 1px; text-transform: uppercase; font-size: 0.9rem; margin: 15px 0; text-align: center; font-weight: 600; opacity: 0.8; }
+
+        .btn { 
+            width: 100%; padding: 16px; margin: 8px 0; border-radius: 20px; 
+            font-size: 1rem; font-weight: 700; cursor: pointer; 
+            background: rgba(255,255,255,0.05); color: white; 
+            display: flex; align-items: center; justify-content: center; gap: 10px; 
+            border: 1px solid var(--glass-border); 
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: var(--accent); color: #fff; border: none; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3); }
+        .btn-danger { background: var(--secondary); color: white; border: none; }
+        .btn-warning { background: linear-gradient(45deg, #f59e0b, #d97706); color: white; border: none; }
+        .btn-success { background: #22c55e; color: white; border: none; }
+        .btn-small { padding: 8px 12px; font-size: 0.8rem; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; width: auto; margin: 0; }
+        
+        input, textarea, select { 
+            width: 100%; padding: 16px; background: rgba(0,0,0,0.2); 
+            border: 1px solid var(--glass-border); border-radius: 18px; 
+            color: white; margin-bottom: 15px; outline: none; font-family: 'Poppins';
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        select option { background: #0f172a; color: #fff; }
+        
+        .v-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: var(--verified); color: white; border-radius: 50%; font-size: 10px; margin-left: 5px; vertical-align: middle; }
+        .v-badge-inline { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; background: var(--verified); color: white; border-radius: 50%; font-size: 8px; margin-left: 3px; vertical-align: middle; }
+        .v-legend { 
+            display: inline-flex; align-items: center; justify-content: center; 
+            width: 18px; height: 18px; background: #ff0000; color: white; 
+            border-radius: 50%; font-size: 10px; margin-left: 5px; 
+            vertical-align: middle; position: relative;
+            box-shadow: 0 0 15px #ff0000; animation: pulse-fire 1.5s infinite;
+        }
+        .v-legend-inline {
+            display: inline-flex; align-items: center; justify-content: center; 
+            width: 14px; height: 14px; background: #ff0000; color: white; 
+            border-radius: 50%; font-size: 8px; margin-left: 3px; 
+            vertical-align: middle; box-shadow: 0 0 8px #ff0000;
+        }
+
+        .vvip-fathur {
+            background: linear-gradient(45deg, #ffd700, #fff9c4, #ffb300, #fff9c4, #ffd700);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-size: 200% auto; font-weight: 900; animation: shine-gold 2s linear infinite;
+        }
+
+        .user-card { 
+            width: 100%; display: flex; align-items: center; gap: 15px; 
+            margin-bottom: 20px; padding: 18px; background: rgba(255,255,255,0.03); 
+            border-radius: 25px; border: 1px solid var(--glass-border); 
+            position: relative; overflow: hidden; 
+        }
+
+        .coin-display {
+            display: flex; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.15);
+            padding: 4px 12px; border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);
+            font-weight: 700; color: #fbbf24; font-size: 0.85rem; margin-top: 4px; width: max-content;
+        }
+
+        .ava-legendary { border: 3px solid #ffd700 !important; box-shadow: 0 0 30px rgba(255, 215, 0, 0.3) !important; }
+        .user-card-fathur {
+            background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), 
+                        url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJxdmZ6emZicHpxeHozY3J6eHpxeHozY3J6eHpxeHozY3J6eHpxJmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/Lopx9eUi34rbq/giphy.gif') !important;
+            background-size: cover !important;
+            border: 1px solid #ffd700 !important;
+        }
+
+        .finished-anim {
+            background: linear-gradient(to right, #3b82f6, #60a5fa, #3b82f6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-size: 200%; font-weight: 800;
+            animation: rainbow-text 3s linear infinite;
+        }
+
+        @keyframes rainbow-text { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+        @keyframes shine-gold { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+        .game-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 300px; margin: 25px 0; }
+        .tile { 
+            aspect-ratio: 1/1; background: rgba(255,255,255,0.03); border-radius: 18px; 
+            border: 1px solid var(--glass-border); display: flex; align-items: center; 
+            justify-content: center; font-size: 2.6rem; font-weight: 900; cursor: pointer; 
+        }
+
+        .lb-row { 
+            background: rgba(255,255,255,0.02); padding: 14px; border-radius: 20px; 
+            display: flex; align-items: center; gap: 12px; border: 1px solid var(--glass-border); 
+            margin-bottom: 10px; cursor: pointer;
+        }
+        .rank-1 { background: var(--accent); color: #fff; }
+
+        .v-notif { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: 12px 25px; border-radius: 30px; font-weight: 800; z-index: 9999; animation: slideDown 0.5s ease forwards; display: none; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4); }
+        @keyframes slideDown { from { top: -60px; } to { top: 20px; } }
+
+        .full-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); border-radius: 40px; z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        
+        #global-announcement { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; border-radius: 40px; text-align: center; padding: 30px; }
+        #event-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; border-radius: 40px; }
+        .event-box { background: #1e293b; border: 1px solid var(--accent); padding: 25px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+
+        .shop-tabs { display: flex; width: 100%; gap: 10px; margin-bottom: 15px; }
+        .shop-tab { flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 12px; color: #fff; cursor: pointer; text-align: center; font-weight: 600; font-size: 0.85rem; }
+        .shop-tab.active { background: var(--accent); border-color: var(--accent); }
+        .shop-list { width: 100%; display: flex; flex-direction: column; gap: 12px; height: 320px; overflow-y: auto; padding-right: 5px; }
+        .shop-item { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 12px 16px; border-radius: 18px; display: flex; align-items: center; justify-content: space-between; }
+        .shop-item-info { display: flex; flex-direction: column; gap: 2px; }
+        .shop-item-title { font-weight: 700; font-size: 0.95rem; }
+        .shop-item-desc { font-size: 0.75rem; opacity: 0.6; }
+        .shop-item-price { font-weight: 800; color: #fbbf24; font-size: 0.85rem; display: flex; align-items: center; gap: 4px; }
+        .btn-shop-action { padding: 8px 14px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border: none; min-width: 80px; }
+        .btn-buy { background: #fbbf24; color: #000; }
+        .btn-equip { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--glass-border); }
+        .btn-active-skin { background: #22c55e; color: #fff; }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .status-offline { background: #64748b; }
+        
+        #inspect-modal, #invite-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(15px); z-index: 150000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px; border-radius: 40px; text-align: center; }
+        .inspect-box { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 25px; border-radius: 30px; width: 100%; max-width: 340px; }
+
+        .lobby-layout-wrapper { display: flex; width: 100%; height: 100%; position: relative; overflow: hidden; }
+        .main-lobby-content { flex: 1; display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; transition: transform var(--transition-smooth); }
+        .sidebar-friends-panel { position: absolute; right: -160px; top: 75px; width: 150px; height: calc(100% - 140px); background: rgba(15, 23, 42, 0.95); border: 1px solid var(--glass-border); border-radius: 20px 0 0 20px; z-index: 100; display: flex; flex-direction: column; padding: 10px; backdrop-filter: blur(10px); box-shadow: -10px 0 25px rgba(0,0,0,0.3); }
+        .sidebar-friends-panel.open { right: -25px; }
+        .sidebar-toggle-tab { position: absolute; left: -30px; top: 50%; transform: translateY(-50%); width: 30px; height: 70px; background: rgba(30, 41, 59, 0.9); border: 1px solid var(--glass-border); border-right: none; border-radius: 12px 0 0 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--accent); font-weight: bold; font-size: 0.9rem; }
+        .sidebar-list-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; scrollbar-width: none; }
+        .sidebar-list-content::-webkit-scrollbar { display: none; }
+        .sidebar-friend-item { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 6px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; text-align: left; }
+        .sidebar-friend-name { font-size: 0.75rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+        
+        .friend-sub-tabs { display: flex; width: 100%; gap: 5px; margin-bottom: 10px; }
+        .friend-sub-tab { flex: 1; padding: 8px; font-size: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; text-align: center; cursor: pointer; color: #fff; font-weight: 600; }
+        .friend-sub-tab.active { background: var(--accent); border-color: var(--accent); }
+        .bg-owner-badge { font-size: 0.75rem; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); padding: 4px 10px; border-radius: 10px; margin-top: 5px; font-weight: 600; color: #fbbf24; }
+        
+        /* ADMIN CSS */
+        .history-list { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 10px; max-height: 250px; overflow-y: auto; }
+        .history-item { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 15px; border-radius: 15px; text-align: left; }
+        .badge { background: var(--accent); padding: 3px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
+        .badge.global { background: #22c55e; }
+        .badge.specific { background: #f59e0b; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    <div id="verify-notif" class="v-notif">Sistem: Akun Anda Telah Terverifikasi</div>
+
+    <div id="invite-modal">
+        <div class="inspect-box" style="border-color: var(--gold);">
+            <div style="font-size: 3.5rem; margin-bottom: 10px;">⚔️</div>
+            <h3 style="margin: 0; color: #fff;">UNDANGAN MABAR</h3>
+            <p style="font-size: 0.9rem; opacity: 0.8; margin: 15px 0;" id="invite-msg-text">Menunggu data...</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-danger" style="margin:0;" onclick="rejectMatchInvite()">REJECT</button>
+                <button class="btn btn-success" style="margin:0;" onclick="acceptMatchInvite()">TERIMA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inspect-modal">
+        <div class="inspect-box">
+            <h3 style="margin-top: 0; color: var(--accent); letter-spacing: 1px;">PROFIL PEMAIN</h3>
+            <div class="ava-frame" id="ins-ava" style="width: 75px; height: 75px; margin: 15px auto; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #fff;">👤</div>
+            <h2 id="ins-name" style="margin: 5px 0 0 0; font-size: 1.4rem; color: #fff;">-</h2>
+            <p id="ins-uid" style="font-size: 0.75rem; opacity: 0.5; margin: 0 0 15px 0;">ID: -</p>
+            
+            <div style="background: rgba(0,0,0,0.2); border-radius: 15px; padding: 12px; margin-bottom: 15px; text-align: left; font-size: 0.85rem; display: flex; flex-direction: column; gap: 5px;">
+                <div>🌟 Level Rank: <b id="ins-lv" style="color: var(--accent);">Level 1</b></div>
+                <div>⚡ Pengalaman: <b id="ins-exp" style="color: #fff;">0 / 100 XP</b></div>
+                <div>🪙 Kekayaan Poin: <b id="ins-points" style="color: #fbbf24;">0 Pts</b></div>
+            </div>
+            <button class="btn" onclick="closeInspect()">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="event-modal">
+        <div class="event-box" id="admin-message-box">
+            </div>
+    </div>
+    
+    <div class="app-container" id="main-container-frame">
+        <div id="global-announcement">
+            <div class="btn-close-ann" style="position:absolute; top:25px; right:25px; cursor:pointer;" onclick="closeAnn()">✕</div>
+            <div style="font-size: 5rem; margin-bottom: 20px;">🏆</div>
+            <h1 class="finished-anim">The Champion</h1>
+            <p style="font-size: 1.1rem; color: #fff; margin: 20px 0;">
+                Selamat kepada <br>
+                <span id="ann-name" class="vvip-fathur" style="font-size: 1.8rem;">FATHUR RIZAM</span><br>
+                Telah Mencapai Status <br>
+                <span class="finished-anim" style="font-size: 1.5rem;">KHATAM / FINISHED</span>
+            </p>
+            <button class="btn btn-primary" style="max-width: 250px;" onclick="closeAnn()">CONGRATS</button>
+        </div>
+
+        <div id="overlay-result" class="full-overlay">
+            <h1 id="win-status">GAME OVER</h1>
+            <p id="reward-exp" style="color: var(--accent); font-size: 1.4rem; font-weight: 800; margin-bottom: 2px;"></p>
+            <p id="reward-points" style="color: #fbbf24; font-size: 1.2rem; font-weight: 800; margin-top: 0; margin-bottom: 10px;"></p>
+            <p id="rematch-status" style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px;"></p>
+            <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center;">
+                <button class="btn btn-primary" style="width: 200px;" id="btn-rematch" onclick="requestRematch()">REMATCH</button>
+                <button class="btn btn-danger" style="width: 200px;" onclick="exitRoomAction()">EXIT</button>
+            </div>
+        </div>
+
+        <div id="scr-login" class="screen active">
+            <h1 style="margin-top: 60px;">XOX PRIME</h1>
+            <p style="opacity: 0.5; text-align: center; font-size: 0.8rem; letter-spacing: 3px;">ULTIMATE STRATEGY GAME</p>
+            <div style="width: 100%; margin-top: 40px;">
+                <input type="text" id="login-user" placeholder="Username/ID">
+                <input type="password" id="login-pass" placeholder="Password">
+                <button class="btn btn-primary" onclick="processLogin()">LOGIN / REGISTER</button>
+            </div>
+            <p style="font-size: 0.7rem; margin-top: 20px; opacity: 0.4;">Secured by Ryzz CV</p>
+            <p style="font-size: 0.6rem; opacity: 0.3; margin-top: auto;"></p>
+        </div>
+
+        <div id="scr-admin" class="screen">
+            <h2 style="color: var(--gold); border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; width: 100%;">⚙️ DEV DASHBOARD</h2>
+            
+            <div style="width:100%; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px; border: 1px solid var(--glass-border);">
+                <h3 id="form-title" style="margin-top:0; font-size:0.9rem;">Buat Pengumuman Baru</h3>
+                <input type="hidden" id="edit-id">
+                
+                <input type="text" id="msg-title" placeholder="Judul (Cth: CHALLENGE EVENT!)" style="padding:10px; font-size:0.85rem;">
+                <textarea id="msg-content" placeholder="Isi pesan/hadiah (bisa pakai HTML)..." style="padding:10px; font-size:0.85rem;"></textarea>
+                
+                <select id="msg-target" onchange="toggleUidInput()" style="padding:10px; font-size:0.85rem;">
+                    <option value="global">Semua Player (Global)</option>
+                    <option value="specific">Pemain Tertentu (Spesifik UID)</option>
+                </select>
+                <input type="text" id="msg-uid" placeholder="Masukkan UID/Username Pemain" style="display: none; padding:10px; font-size:0.85rem;">
+                
+                <button class="btn btn-primary" id="btn-submit" onclick="saveMessage()">KIRIM PESAN SEKARANG</button>
+                <button class="btn btn-warning" id="btn-cancel" onclick="resetForm()" style="display:none;">BATAL EDIT</button>
+            </div>
+
+            <div style="width:100%; margin-top:15px;">
+                <h3 style="font-size:0.9rem; margin-bottom:5px;">Riwayat Pesan</h3>
+                <div class="history-list" id="history-container"></div>
+            </div>
+
+            <button class="btn btn-danger" style="margin-top:auto;" onclick="handleLogout()">LOGOUT ADMIN</button>
+        </div>
+
+        <div id="scr-home" class="screen">
+            <div class="lobby-layout-wrapper">
+                <div class="sidebar-friends-panel" id="lobby-sidebar-panel">
+                    <div class="sidebar-toggle-tab" onclick="toggleSidebarFriends()">👥</div>
+                    <div style="font-size: 0.65rem; font-weight: 800; color: var(--accent); margin-bottom: 8px; border-bottom: 1px solid var(--glass-border); padding-bottom: 4px; text-align: center;">FRIENDS LIST</div>
+                    <div class="sidebar-list-content" id="sidebar-online-list-target"></div>
+                </div>
+
+                <div class="main-lobby-content" id="lobby-main-scrollable">
+                    <div class="user-card" id="my-card-element">
+                        <div class="ava-frame" id="my-ava" style="width:58px; height:58px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; color:#fff; cursor:pointer;" onclick="inspectUser(player.username)">👤</div>
+                        <div style="flex: 1; padding-left: 5px;">
+                            <b id="my-name-display" style="cursor:pointer;" onclick="inspectUser(player.username)">-</b><span id="my-v-badge"></span><br>
+                            <small id="my-lv" style="color: var(--accent); font-weight: 700;">Level 1</small>
+                            <div class="coin-display">🪙 <span id="my-points-display">0</span> Pts</div>
+                        </div>
+                        <button onclick="nav('scr-profile')" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:var(--accent); width:40px; height:40px; border-radius:12px; cursor:pointer;">⚙️</button>
+                    </div>
+                    <h2>Main Menu</h2>
+                    <button class="btn btn-primary" onclick="startSoloMode()">SOLO RANK</button>
+                    <button class="btn" onclick="nav('scr-online-lobby')">MULTIPLAYER</button>
+                    <button class="btn btn-warning" onclick="openShopScreen()">SHOP</button>
+                    <button class="btn" style="border-color: var(--accent); color: var(--accent);" onclick="openFriendsList()">DAFTAR TEMAN</button>
+                    <button class="btn" style="border-color: var(--accent); color: var(--accent);" onclick="openLeaderboard()">LEADERBOARD</button>
+                    <div style="flex:1"></div>
+                    <button class="btn" style="opacity: 0.6; border:none;" onclick="handleLogout()">LOGOUT</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="scr-friends" class="screen">
+            <h2>SISTEM TEMAN</h2>
+            <div class="friend-sub-tabs">
+                <div class="friend-sub-tab active" id="f-tab-list" onclick="switchFriendTab('list')">DAFTAR TEMAN</div>
+                <div class="friend-sub-tab" id="f-tab-req" onclick="switchFriendTab('req')">PERMINTAAN (<span id="req-count-badge">0</span>)</div>
+            </div>
+
+            <div id="friend-list-view" style="width:100%; display:flex; flex-direction:column; height:100%;">
+                <div style="display:flex; width:100%; gap:8px; margin-bottom:15px;">
+                    <input type="text" id="search-friend-uid" placeholder="Masukkan ID Teman..." style="margin-bottom:0; flex:1; padding:12px;">
+                    <button class="btn btn-primary btn-small" onclick="sendFriendRequestAction()" style="width:70px;">ADD</button>
+                </div>
+                <div id="friends-list-container" style="width: 100%; display: flex; flex-direction: column; gap: 10px; height: 300px; overflow-y: auto;"></div>
+            </div>
+
+            <div id="friend-req-view" style="width:100%; display:none; flex-direction:column; height:360px; overflow-y:auto; gap:10px;"></div>
+            <button class="btn" style="margin-top:15px;" onclick="nav('scr-home')">BACK</button>
+        </div>
+
+        <div id="scr-profile" class="screen">
+            <h2>User Profile</h2>
+            <div class="ava-frame" id="prev-ava" style="width:80px; height:80px; font-size:3rem; margin-bottom: 20px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff;">👤</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; width: 100%;">
+                <div class="ava-item" onclick="setAva('👤')" style="font-size:1.5rem; cursor:pointer; text-align:center;">👤</div>
+                <div class="ava-item" onclick="setAva('🔥')" style="font-size:1.5rem; cursor:pointer; text-align:center;">🔥</div>
+                <div class="ava-item" onclick="setAva('⚡')" style="font-size:1.5rem; cursor:pointer; text-align:center;">⚡</div>
+                <div class="ava-item" onclick="setAva('💎')" style="font-size:1.5rem; cursor:pointer; text-align:center;">💎</div>
+                <div class="ava-item" onclick="setAva('🦊')" style="font-size:1.5rem; cursor:pointer; text-align:center;">🦊</div>
+                <div class="ava-item" onclick="setAva('🤖')" style="font-size:1.5rem; cursor:pointer; text-align:center;">🤖</div>
+                <div class="ava-item" onclick="setAva('🐱')" style="font-size:1.5rem; cursor:pointer; text-align:center;">🐱</div>
+                <div class="ava-item" onclick="setAva('🦁')" style="font-size:1.5rem; cursor:pointer; text-align:center;">🦁</div>
+            </div>
+            <input type="text" id="new-display-name" placeholder="Display Name">
+            <button class="btn btn-primary" onclick="saveNewProfile()">UPDATE PROFILE</button>
+            <button class="btn" onclick="nav('scr-home')">BACK</button>
+        </div>
+
+        <div id="scr-shop" class="screen">
+            <h2>SKIN MARKETPLACE</h2>
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 15px; padding: 0 5px;">
+                <span style="font-size: 0.85rem; opacity: 0.7;">Dompet Anda:</span>
+                <b style="color: #fbbf24; font-size: 1.1rem;">🪙 <span id="shop-wallet-display">0</span> Pts</b>
+            </div>
+            <div class="shop-tabs">
+                <div class="shop-tab active" id="tab-skin" onclick="switchShopTab('skin')">Skin X / O</div>
+                <div class="shop-tab" id="tab-bg" onclick="switchShopTab('bg')">Background</div>
+            </div>
+            <div class="shop-list" id="shop-items-container"></div>
+            <button class="btn" style="margin-top:15px;" onclick="nav('scr-home')">BACK TO MENU</button>
+        </div>
+
+        <div id="scr-leaderboard" class="screen">
+            <h2>TOP 10 PLAYERS</h2>
+            <div id="lb-list-global" style="width: 100%; display: flex; flex-direction: column; gap: 10px;"></div>
+            <button class="btn" style="margin-top:20px; border:none;" onclick="back()">CLOSE</button>
+        </div>
+
+        <div id="scr-online-lobby" class="screen">
+            <h2>MULTIPLAYER</h2>
+            <button class="btn btn-primary" onclick="createRoom()">CREATE ROOM</button>
+            <button class="btn" onclick="nav('scr-join-room')">JOIN ROOM</button>
+            <button class="btn" style="margin-top:auto; border:none;" onclick="nav('scr-home')">BACK</button>
+        </div>
+
+        <div id="scr-join-room" class="screen">
+            <h2>ENTER ROOM CODE</h2>
+            <input type="number" id="join-code" placeholder="00000" style="text-align: center; font-size: 2rem; letter-spacing: 5px;">
+            <button class="btn btn-primary" onclick="processJoin()">JOIN NOW</button>
+            <button class="btn" onclick="nav('scr-online-lobby')">CANCEL</button>
+        </div>
+
+        <div id="scr-waiting" class="screen">
+            <h2>WAITING OPPONENT</h2>
+            <h1 id="room-id-val" style="color: var(--accent); font-size: 4rem;">00000</h1>
+            
+            <div style="width:100%; background:rgba(255,255,255,0.02); border-radius:20px; padding:15px; border:1px solid var(--glass-border); margin-bottom:15px;">
+                <p style="font-size:0.8rem; font-weight:700; color:var(--accent); margin-top:0; margin-bottom:10px; text-align:left;">QUICK INVITE FRIENDS</p>
+                <div id="lobby-friends-container" style="display:flex; flex-direction:column; gap:8px; max-height:160px; overflow-y:auto;"></div>
+            </div>
+
+            <button class="btn btn-primary" onclick="copyInviteLink()">COPY CODE</button>
+            <button class="btn btn-danger" onclick="exitRoomAction()">CANCEL ROOM</button>
+        </div>
+
+        <div id="scr-game" class="screen">
+            <div id="game-info" style="font-weight: 800; margin-bottom: 5px; color: var(--accent);">PREPARING...</div>
+            <div id="bg-owner-info" class="bg-owner-badge">Menggunakan Background Klasik</div>
+            
+            <div class="game-grid">
+                <div class="tile" onclick="makeMove(0)"></div><div class="tile" onclick="makeMove(1)"></div><div class="tile" onclick="makeMove(2)"></div>
+                <div class="tile" onclick="makeMove(3)"></div><div class="tile" onclick="makeMove(4)"></div><div class="tile" onclick="makeMove(5)"></div>
+                <div class="tile" onclick="makeMove(6)"></div><div class="tile" onclick="makeMove(7)"></div><div class="tile" onclick="makeMove(8)"></div>
+            </div>
+            <div id="social-tools" style="width: 100%;">
+                <div style="display:flex; justify-content:center; gap:15px; margin-bottom: 10px;">
+                    <span style="cursor:pointer; font-size:1.8rem;" onclick="sticker('😎')">😎</span>
+                    <span style="cursor:pointer; font-size:1.8rem;" onclick="sticker('🔥')">🔥</span>
+                    <span style="cursor:pointer; font-size:1.8rem;" onclick="sticker('💀')">💀</span>
+                </div>
+                <div style="width:100%; background: rgba(0,0,0,0.2); border-radius:20px; padding:10px; height:120px; border:1px solid var(--glass-border); display:flex; flex-direction:column;">
+                    <div id="chat-content" style="flex:1; overflow-y:auto; font-size:0.8rem; margin-bottom:5px;"></div>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" id="chat-in" placeholder="Type message..." style="flex:1; margin-bottom:0; padding:8px; font-size:0.8rem;">
+                        <button onclick="sendChat()" style="background:var(--accent); border:none; width:40px; border-radius:10px; color:#fff;">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnO4RRw9Yy6qKDN98T-VgM8P4_IuA6zIs",
+            authDomain: "chat-fathur-2026.firebaseapp.com",
+            projectId: "chat-fathur-2026",
+            databaseURL: "https://chat-fathur-2026-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let player = null, roomCode = null, side = null, isTurn = false, vsAI = false, aiBoard = Array(9).fill(""), lastScr = 'scr-login', pickedAva = '👤';
+        
+        const verifiedUsers = ['fathurrizamreal', 'deni', 'chromss','anriees', 'burik celleng', 'nab-nab'];
+        let hasShownVerifyNotif = false, matchEnded = false;
+        let currentShopTab = 'skin', currentFriendTab = 'list';
+        let currentInviteData = null; 
+        
+        let viewedAnnouncements = JSON.parse(localStorage.getItem('viewed_announcements')) || [];
+
+        const shopSkins = [
+            { id: 'skin_default', name: 'Default Classic', desc: 'Gaya orisinal X & O bawaan.', price: 0, xColor: '#3b82f6', xShadow: '#3b82f6', oColor: '#ffffff', oShadow: '#ffffff' },
+            { id: 'skin_cyber', name: 'Neon Cyberpunk', desc: 'Cahaya fusi masa depan laser.', price: 250, xColor: '#00f2fe', xShadow: '#00f2fe', oColor: '#f355da', oShadow: '#f355da' },
+            { id: 'skin_gold', name: 'Golden Royal', desc: 'Kilauan emas murni para juara.', price: 600, xColor: '#ffd700', xShadow: '#ffd700', oColor: '#fff9c4', oShadow: '#ffd700' },
+            { id: 'skin_fire', name: 'Fire Phoenix', desc: 'Bara api magis merah menyala.', price: 1000, xColor: '#ef4444', xShadow: '#f97316', oColor: '#f97316', oShadow: '#ef4444' },
+            { id: 'skin_shadow', name: 'Dark Shadow', desc: 'Gaya hantu kegelapan misterius.', price: 1500, xColor: '#475569', xShadow: '#000000', oColor: '#94a3b8', oShadow: '#334155' },
+            { id: 'skin_ruby', name: 'Ruby Demon', desc: 'Kekuatan kristal iblis darah.', price: 2500, xColor: '#b91c1c', xShadow: '#ff0000', oColor: '#f43f5e', oShadow: '#b91c1c' }
+        ];
+
+        const shopBgs = [
+            { id: 'bg_default', name: 'Default Blue Slate', desc: 'Latar gradasi standar aplikasi.', price: 0, css: 'linear-gradient(135deg, #0f172a, #1e293b, #000000)' },
+            { id: 'bg_space', name: 'Space Nebula', desc: 'Atmosfer kosmik luar angkasa luas.', price: 300, css: 'linear-gradient(135deg, #2e0854, #120024, #000000)' },
+            { id: 'bg_cyber', name: 'Cyberpunk Grid', desc: 'Dunia simulasi kota malam neon.', price: 700, css: 'linear-gradient(135deg, #09090e, #130a1c, #1a062c)' },
+            { id: 'bg_lava', name: 'Lava Inferno', desc: 'Magma panas bergejolak di medan perang.', price: 1200, css: 'linear-gradient(135deg, #1e0505, #3b0a0a, #000000)' },
+            { id: 'bg_emerald', name: 'Emerald Forest', desc: 'Nuansa alam fantasi hijau mistis.', price: 1800, css: 'linear-gradient(135deg, #022c22, #064e3b, #020617)' },
+            { id: 'bg_matrix', name: 'Matrix Glitch', desc: 'Kode digital enkripsi dunia virtual.', price: 3000, css: 'linear-gradient(135deg, #05190e, #022c16, #000000)' }
+        ];
+
+        window.onload = () => {
+            const u = localStorage.getItem('xox_u'), p = localStorage.getItem('xox_p');
+            if(u && p) { document.getElementById('login-user').value = u; document.getElementById('login-pass').value = p; processLogin(true); }
+        };
+
+        function nav(id) { 
+            const active = document.querySelector('.screen.active');
+            if(active) lastScr = active.id;
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+            applyEquippedSkins();
+            if(id === 'scr-home') updateSidebarFriendsList();
+        }
+        function back() { nav(lastScr); }
+
+        function processLogin(auto = false) {
+            const u = document.getElementById('login-user').value.trim().toLowerCase();
+            const p = document.getElementById('login-pass').value.trim();
+            if(!u || !p) return;
+            
+            // CEK ADMIN
+            if(u === 'admin' && p === 'devryzz2026') {
+                nav('scr-admin');
+                fetchHistory();
+                return;
+            }
+
+            db.ref('players/' + u).once('value', snap => {
+                let data;
+                if(snap.exists()) { 
+                    data = snap.val(); 
+                    if(data.pass !== p) return auto ? handleLogout() : alert("Wrong Password!"); 
+                    if(data.points === undefined) data.points = 0;
+                    if(!data.ownedSkins) data.ownedSkins = ['skin_default'];
+                    if(!data.ownedBgs) data.ownedBgs = ['bg_default'];
+                    if(!data.activeSkin) data.activeSkin = 'skin_default';
+                    if(!data.activeBg) data.activeBg = 'bg_default';
+                    if(!data.friends) data.friends = [];
+                } 
+                else { 
+                    data = { username: u, name: u, pass: p, lv: 1, exp: 0, ava: '👤', points: 0, status: 'lobby', ownedSkins: ['skin_default'], ownedBgs: ['bg_default'], activeSkin: 'skin_default', activeBg: 'bg_default', friends: [] }; 
+                }
+                
+                if(u === 'chromss') data.lv = 57676;
+                if(u === 'anriees') data.lv = 9340349;
+                if(u === 'deni') data.lv = 6864867;
+                if(u === 'nab-nab') data.lv = 100; 
+                if(u === 'fathurrizamreal') { data.lv = 999999; data.points = 9000000; }
+
+                data.status = 'lobby'; 
+                db.ref('players/' + u).update(data);
+                localStorage.setItem('xox_u', u); localStorage.setItem('xox_p', p);
+                player = data; 
+                syncUI(); applyEquippedSkins(); listenInvites(); listenFriendRequests(); listenAnnouncements();
+                
+                nav('scr-home');
+                
+                if(verifiedUsers.includes(u) && !hasShownVerifyNotif) {
+                    const vNotif = document.getElementById('verify-notif');
+                    vNotif.style.display = 'block'; hasShownVerifyNotif = true;
+                    setTimeout(() => { vNotif.style.display = 'none'; }, 5000);
+                }
+                
+                setInterval(() => { if(document.getElementById('scr-home').classList.contains('active')) updateSidebarFriendsList(); }, 4000);
+            });
+        }
+
+        // ================== SISTEM ADMIN ==================
+        function toggleUidInput() {
+            const target = document.getElementById('msg-target').value;
+            document.getElementById('msg-uid').style.display = target === 'specific' ? 'block' : 'none';
+        }
+
+        function saveMessage() {
+            const id = document.getElementById('edit-id').value || Date.now().toString();
+            const title = document.getElementById('msg-title').value.trim();
+            const content = document.getElementById('msg-content').value.trim();
+            const target = document.getElementById('msg-target').value;
+            const targetUid = document.getElementById('msg-uid').value.trim().toLowerCase();
+
+            if(!title || !content) return alert("Judul dan isi pesan wajib diisi!");
+            if(target === 'specific' && !targetUid) return alert("Masukkan UID Pemain spesifik!");
+
+            const msgData = { id: id, title: title, content: content, target: target, targetUid: target === 'specific' ? targetUid : 'all', timestamp: Date.now() };
+
+            db.ref('announcements/' + id).set(msgData).then(() => { alert("Pesan berhasil dikirim!"); resetForm(); });
+        }
+
+        function fetchHistory() {
+            db.ref('announcements').on('value', snap => {
+                const container = document.getElementById('history-container');
+                container.innerHTML = '';
+                if(!snap.exists()) { container.innerHTML = '<div style="opacity:0.5; text-align:center;">Belum ada riwayat pesan.</div>'; return; }
+
+                const data = snap.val();
+                const sortedKeys = Object.keys(data).sort((a, b) => data[b].timestamp - data[a].timestamp);
+
+                sortedKeys.forEach(key => {
+                    const msg = data[key];
+                    const badgeClass = msg.target === 'global' ? 'global' : 'specific';
+                    const targetText = msg.target === 'global' ? 'Global' : `UID: ${msg.targetUid}`;
+                    container.innerHTML += `
+                        <div class="history-item">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                                <b style="color:var(--accent); font-size: 0.85rem;">${msg.title}</b>
+                                <span class="badge ${badgeClass}">${targetText}</span>
+                            </div>
+                            <p style="font-size:0.75rem; opacity:0.8; margin:0 0 10px 0;">${msg.content}</p>
+                            <div style="display:flex; gap:10px;">
+                                <button class="btn btn-warning btn-small" onclick="editMessage('${msg.id}')">EDIT</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteMessage('${msg.id}')">HAPUS</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function editMessage(id) {
+            db.ref('announcements/' + id).once('value', snap => {
+                if(!snap.exists()) return;
+                const msg = snap.val();
+                document.getElementById('form-title').innerText = "Edit Pengumuman"; document.getElementById('edit-id').value = msg.id;
+                document.getElementById('msg-title').value = msg.title; document.getElementById('msg-content').value = msg.content;
+                document.getElementById('msg-target').value = msg.target; document.getElementById('msg-uid').value = msg.target === 'specific' ? msg.targetUid : '';
+                toggleUidInput(); document.getElementById('btn-submit').innerText = "UPDATE PESAN"; document.getElementById('btn-cancel').style.display = "block";
+            });
+        }
+
+        function deleteMessage(id) { if(confirm("Yakin ingin menghapus pesan ini?")) { db.ref('announcements/' + id).remove(); } }
+
+        function resetForm() {
+            document.getElementById('form-title').innerText = "Buat Pengumuman Baru"; document.getElementById('edit-id').value = '';
+            document.getElementById('msg-title').value = ''; document.getElementById('msg-content').value = '';
+            document.getElementById('msg-target').value = 'global'; document.getElementById('msg-uid').value = '';
+            toggleUidInput(); document.getElementById('btn-submit').innerText = "KIRIM PESAN SEKARANG"; document.getElementById('btn-cancel').style.display = "none";
+        }
+
+        // ================== SISTEM PESAN PEMAIN ==================
+        function listenAnnouncements() {
+            db.ref('announcements').on('value', snap => {
+                if (!snap.exists()) { document.getElementById('event-modal').style.display = 'none'; return; }
+                const data = snap.val();
+                const keys = Object.keys(data).sort((a, b) => data[b].timestamp - data[a].timestamp);
+                
+                for (let i = 0; i < keys.length; i++) {
+                    const msg = data[keys[i]];
+                    const isTargeted = (msg.target === 'global') || (msg.target === 'specific' && msg.targetUid === player.username);
+                    if (isTargeted && !viewedAnnouncements.includes(msg.id)) { tampilkanPesanAdmin(msg); return; }
+                }
+            });
+        }
+
+        function tampilkanPesanAdmin(msg) {
+            const box = document.getElementById('admin-message-box');
+            box.innerHTML = `
+                <h2 style="margin-top:0; color:#fff">${msg.title}</h2>
+                <div style="font-size: 0.9rem; line-height: 1.6; color: #94a3b8; margin: 20px 0;">${msg.content}</div>
+                <button class="btn btn-primary" onclick="tutupPesanAdmin('${msg.id}')">MENGERTI / SAYA SIAP</button>
+            `;
+            document.getElementById('event-modal').style.display = 'flex';
+        }
+
+        function tutupPesanAdmin(msgId) {
+            document.getElementById('event-modal').style.display = 'none';
+            viewedAnnouncements.push(msgId);
+            localStorage.setItem('viewed_announcements', JSON.stringify(viewedAnnouncements));
+            listenAnnouncements();
+        }
+        
+        function closeAnn() { document.getElementById('global-announcement').style.display = 'none'; }
+        
+        function handleLogout() { 
+            if(player) db.ref('players/' + player.username).update({ status: 'offline' });
+            localStorage.clear(); location.reload(); 
+        }
+
+        function syncUI() {
+            if(!player) return;
+            const myAva = document.getElementById('my-ava'), prevAva = document.getElementById('prev-ava'), myCard = document.getElementById('my-card-element'), myName = document.getElementById('my-name-display'), myLv = document.getElementById('my-lv'), myBadge = document.getElementById('my-v-badge');
+            myCard.classList.remove('user-card-fathur'); myName.classList.remove('vvip-fathur'); myAva.classList.remove('ava-legendary'); prevAva.classList.remove('ava-legendary');
+
+            document.getElementById('my-points-display').innerText = player.points.toLocaleString('id-ID');
+
+            if(player.username === 'fathurrizamreal') {
+                myCard.classList.add('user-card-fathur'); myAva.classList.add('ava-legendary'); prevAva.classList.add('ava-legendary');
+                myAva.innerHTML = "VVIP"; prevAva.innerHTML = "VVIP";
+                myName.innerText = player.name; myName.classList.add('vvip-fathur');
+                myBadge.innerHTML = '<span class="v-legend">✓</span>';
+                myLv.innerHTML = '<span class="finished-anim">CHAMPION / FINISHED</span>';
+            } else {
+                myAva.innerText = player.ava; prevAva.innerText = player.ava;
+                myName.innerText = player.name;
+                myBadge.innerHTML = verifiedUsers.includes(player.username) ? '<span class="v-badge">✓</span>' : '';
+                myLv.innerText = `Level ${player.lv} (${player.exp}/100 XP)`;
+            }
+            document.getElementById('new-display-name').value = player.name; pickedAva = player.ava;
+        }
+
+        function setAva(a) { if(player.username === 'fathurrizamreal') return; pickedAva = a; document.getElementById('prev-ava').innerText = a; }
+
+        function saveNewProfile() {
+            const n = document.getElementById('new-display-name').value.trim();
+            if(!n) return; player.name = n; player.ava = pickedAva;
+            db.ref('players/' + player.username).update({ name: n, ava: pickedAva });
+            syncUI(); nav('scr-home');
+        }
+
+        function toggleSidebarFriends() {
+            const panel = document.getElementById('lobby-sidebar-panel');
+            const content = document.getElementById('lobby-main-scrollable');
+            panel.classList.toggle('open');
+            if(panel.classList.contains('open')) { content.style.transform = "translateX(-60px)"; updateSidebarFriendsList(); } else { content.style.transform = "translateX(0px)"; }
+        }
+
+        function updateSidebarFriendsList() {
+            const listTarget = document.getElementById('sidebar-online-list-target');
+            if(!player || !player.friends || player.friends.length === 0) { listTarget.innerHTML = '<div style="font-size:0.6rem; text-align:center; opacity:0.4; margin-top:20px;">No Friends</div>'; return; }
+            listTarget.innerHTML = '';
+            player.friends.forEach(fUid => {
+                db.ref('players/' + fUid).once('value', snap => {
+                    if(!snap.exists()) return;
+                    const d = snap.val();
+                    const isOnline = d.status === 'lobby' || d.status === 'playing';
+                    let vTagInline = d.username === 'fathurrizamreal' ? '<span class="v-legend-inline">✓</span>' : (verifiedUsers.includes(d.username) ? '<span class="v-badge-inline">✓</span>' : '');
+                    let statusText = isOnline ? (d.status === 'playing' ? 'In-Game' : 'Lobby') : 'Offline';
+                    let statusColor = isOnline ? '#22c55e' : '#64748b';
+                    listTarget.innerHTML += `
+                        <div class="sidebar-friend-item" onclick="inspectUser('${d.username}')">
+                            <div class="sidebar-friend-name">${d.name}${vTagInline}</div>
+                            <div style="font-size:0.55rem; display:flex; align-items:center; gap:3px; opacity:0.8;">
+                                <span class="status-dot ${isOnline ? 'status-online' : 'status-offline'}" style="width:5px; height:5px; margin:0;"></span>
+                                <span style="color:${statusColor};">${statusText}</span>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        function inspectUser(uid) {
+            db.ref('players/' + uid).once('value', snap => {
+                if(!snap.exists()) return;
+                const d = snap.val();
+                document.getElementById('ins-name').innerText = d.name;
+                document.getElementById('ins-uid').innerText = `ID: ${d.username}`;
+                document.getElementById('ins-ava').innerText = d.username === 'fathurrizamreal' ? "VVIP" : d.ava;
+                if(d.username === 'fathurrizamreal') { document.getElementById('ins-lv').innerHTML = '<span class="finished-anim">CHAMPION</span>'; } else { document.getElementById('ins-lv').innerText = `Level ${d.lv}`; }
+                document.getElementById('ins-exp').innerText = `${d.exp || 0} / 100 XP`;
+                let ptsAmount = d.username === 'fathurrizamreal' ? 9000000 : (d.points || 0);
+                document.getElementById('ins-points').innerText = `${ptsAmount.toLocaleString('id-ID')} Pts`;
+                document.getElementById('inspect-modal').style.display = 'flex';
+            });
+        }
+        function closeInspect() { document.getElementById('inspect-modal').style.display = 'none'; }
+        function openFriendsList() { nav('scr-friends'); switchFriendTab('list'); }
+        function switchFriendTab(tab) {
+            currentFriendTab = tab;
+            document.getElementById('f-tab-list').classList.toggle('active', tab === 'list');
+            document.getElementById('f-tab-req').classList.toggle('active', tab === 'req');
+            if(tab === 'list') { document.getElementById('friend-list-view').style.display = 'flex'; document.getElementById('friend-req-view').style.display = 'none'; renderFriendsListMenu(); } else { document.getElementById('friend-list-view').style.display = 'none'; document.getElementById('friend-req-view').style.display = 'flex'; renderIncomingRequestsMenu(); }
+        }
+
+        function sendFriendRequestAction() {
+            const fUid = document.getElementById('search-friend-uid').value.trim().toLowerCase();
+            if(!fUid || fUid === player.username) return alert("ID Tidak Valid!");
+            db.ref('players/' + fUid).once('value', snap => {
+                if(!snap.exists()) return alert("User ID tidak ditemukan!");
+                if(player.friends && player.friends.includes(fUid)) return alert("Sudah berteman dengan akun ini!");
+                db.ref(`friendRequests/${fUid}/${player.username}`).set({ fromUid: player.username, fromName: player.name, fromAva: player.ava });
+                document.getElementById('search-friend-uid').value = '';
+                alert("Permintaan pertemanan berhasil dikirim!");
+            });
+        }
+
+        function listenFriendRequests() { db.ref('friendRequests/' + player.username).on('value', snap => { const count = snap.exists() ? Object.keys(snap.val()).length : 0; document.getElementById('req-count-badge').innerText = count; if(currentFriendTab === 'req') renderIncomingRequestsMenu(); }); }
+        
+        function renderIncomingRequestsMenu() {
+            const view = document.getElementById('friend-req-view'); view.innerHTML = '';
+            db.ref('friendRequests/' + player.username).once('value', snap => {
+                if(!snap.exists()) { view.innerHTML = '<div style="text-align:center; opacity:0.5; margin-top:40px;">Tidak ada permintaan.</div>'; return; }
+                snap.forEach(child => {
+                    const r = child.val();
+                    view.innerHTML += `
+                        <div class="lb-row" style="cursor:default;">
+                            <div style="font-size:1.2rem;">${r.fromAva || '👤'}</div>
+                            <div style="flex:1; text-align:left;"><b>${r.fromName}</b><br><small style="opacity:0.6;">ID: ${r.fromUid}</small></div>
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn-shop-action btn-buy" style="background:#22c55e; color:#fff; min-width:55px;" onclick="acceptFriendship('${r.fromUid}')">ACC</button>
+                                <button class="btn-shop-action btn-danger" style="min-width:55px;" onclick="rejectFriendship('${r.fromUid}')">REJ</button>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        function acceptFriendship(targetUid) {
+            if(!player.friends) player.friends = []; if(!player.friends.includes(targetUid)) player.friends.push(targetUid);
+            db.ref('players/' + player.username).update({ friends: player.friends });
+            db.ref('players/' + targetUid).once('value', snap => { if(snap.exists()) { let d = snap.val(); if(!d.friends) d.friends = []; if(!d.friends.includes(player.username)) d.friends.push(player.username); db.ref('players/' + targetUid).update({ friends: d.friends }); } });
+            db.ref(`friendRequests/${player.username}/${targetUid}`).remove();
+            alert("Sekarang Anda telah berteman!"); switchFriendTab('list'); updateSidebarFriendsList();
+        }
+
+        function rejectFriendship(targetUid) { db.ref(`friendRequests/${player.username}/${targetUid}`).remove(); renderIncomingRequestsMenu(); }
+
+        function renderFriendsListMenu() {
+            const container = document.getElementById('friends-list-container'); container.innerHTML = '';
+            if(!player.friends || player.friends.length === 0) { container.innerHTML = '<div style="text-align:center; opacity:0.5; margin-top:20px;">Belum ada teman.</div>'; return; }
+            player.friends.forEach(fUid => {
+                db.ref('players/' + fUid).once('value', snap => {
+                    if(!snap.exists()) return; const d = snap.val(); const isOnline = d.status === 'lobby' || d.status === 'playing'; const dot = `<span class="status-dot ${isOnline ? 'status-online' : 'status-offline'}"></span>`;
+                    container.innerHTML += `<div class="lb-row" onclick="inspectUser('${d.username}')"><div style="font-size:1.2rem;">${d.ava}</div><div style="flex:1; text-align:left;"><b>${d.name}</b><br><small>${dot}${isOnline ? (d.status === 'playing' ? 'Bertanding' : 'Online/Lobby') : 'Offline'}</small></div><span style="font-size:0.75rem; opacity:0.6; padding-right:10px;">ID: ${d.username}</span></div>`;
+                });
+            });
+        }
+
+        function renderLobbyFriends() {
+            const container = document.getElementById('lobby-friends-container'); container.innerHTML = '';
+            if(!player.friends || player.friends.length === 0) { container.innerHTML = '<div style="text-align:center; opacity:0.5; font-size:0.75rem;">Ajak teman untuk berteman dahulu.</div>'; return; }
+            player.friends.forEach(fUid => {
+                db.ref('players/' + fUid).once('value', snap => {
+                    if(!snap.exists()) return; const d = snap.val();
+                    if(d.status === 'lobby') { container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:12px; border:1px solid var(--glass-border);"><div style="text-align:left; font-size:0.8rem;"><b>${d.name}</b> (Online)</div><button class="btn-shop-action btn-buy" style="min-width:60px; padding:4px 10px; font-size:0.75rem;" onclick="sendMatchInvite('${d.username}')">INVITE</button></div>`; }
+                });
+            });
+        }
+
+        function sendMatchInvite(targetUid) { db.ref('invites/' + targetUid).set({ fromName: player.name, fromUid: player.username, roomCode: roomCode }); alert("Undangan dikirim!"); }
+        function listenInvites() { db.ref('invites/' + player.username).on('value', snap => { if(!snap.exists()) return; currentInviteData = snap.val(); document.getElementById('invite-msg-text').innerHTML = `<b>${currentInviteData.fromName}</b> mengundang Anda untuk bertempur!`; document.getElementById('invite-modal').style.display = 'flex'; }); }
+        
+        function acceptMatchInvite() {
+            if(!currentInviteData) return; const code = currentInviteData.roomCode; db.ref('invites/' + player.username).remove(); document.getElementById('invite-modal').style.display = 'none';
+            db.ref('rooms/' + code).once('value', snap => {
+                if(snap.exists() && snap.val().status === 'wait') {
+                    roomCode = code; side = 'O'; vsAI = false; matchEnded = false;
+                    db.ref('rooms/' + code).update({ status: 'play', p2: player.username, p2Skin: player.activeSkin, p2Bg: player.activeBg, p2Name: player.name });
+                    db.ref('players/' + player.username).update({ status: 'playing' }); listenRoom();
+                } else { alert("Room penuh/tutup!"); }
+            });
+        }
+        function rejectMatchInvite() { db.ref('invites/' + player.username).remove(); document.getElementById('invite-modal').style.display = 'none'; currentInviteData = null; }
+        
+        function openLeaderboard() {
+            nav('scr-leaderboard'); const list = document.getElementById('lb-list-global'); list.innerHTML = '<div style="text-align:center; opacity:0.5; margin-top:20px;">Connecting...</div>';
+            db.ref('players').once('value').then(snap => {
+                let players = []; snap.forEach(c => {
+                    let d = c.val();
+                    if(d.username === 'fathurrizamreal') { d.lv = 9999999999999999999; d.points = 9000000; }
+                    if(d.username === 'chromss') d.lv = 670349; if(d.username === 'anriees') d.lv = 9340349; if(d.username === 'deni') d.lv = 9658562; if(d.username === 'nab-nab') d.lv = 167; 
+                    players.push(d);
+                });
+                players.sort((a, b) => b.lv - a.lv || b.exp - a.exp);
+                let top10 = players.slice(0, 10); list.innerHTML = '';
+                top10.forEach((p, i) => {
+                    let isFathur = p.username === 'fathurrizamreal'; let rClass = isFathur ? 'user-card-fathur' : (i === 0 ? 'rank-1' : '');
+                    let vTag = '', lvDisplay = `Lv ${p.lv}`, displayName = p.name, avaContent = p.ava, avaClass = '';
+                    if(isFathur) { vTag = '<span class="v-legend">✓</span>'; lvDisplay = '<span class="finished-anim">KHATAM</span>'; avaContent = "VVIP"; avaClass = 'ava-legendary'; } else if(verifiedUsers.includes(p.username)) { vTag = '<span class="v-badge">✓</span>'; }
+                    list.innerHTML += `<div class="lb-row ${rClass}" onclick="inspectUser('${p.username}')"><div style="font-weight:900; width:20px;">${i+1}</div><div class="ava-frame ${avaClass}" style="width:35px; height:35px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.8rem;">${avaContent}</div><div style="flex:1; text-align:left; padding-left:5px;"><b>${displayName}</b>${vTag}</div><div style="font-weight:800; color:var(--accent);">${lvDisplay}</div></div>`;
+                });
+            });
+        }
+
+        function openShopScreen() { nav('scr-shop'); document.getElementById('shop-wallet-display').innerText = player.points.toLocaleString('id-ID'); renderShopItems(); }
+        function switchShopTab(tab) { currentShopTab = tab; document.getElementById('tab-skin').classList.toggle('active', tab === 'skin'); document.getElementById('tab-bg').classList.toggle('active', tab === 'bg'); renderShopItems(); }
+        function renderShopItems() {
+            const container = document.getElementById('shop-items-container'); container.innerHTML = '';
+            const items = currentShopTab === 'skin' ? shopSkins : shopBgs;
+            items.forEach(item => {
+                const isOwned = (currentShopTab === 'skin' ? player.ownedSkins : player.ownedBgs).includes(item.id);
+                const isActive = (currentShopTab === 'skin' ? player.activeSkin : player.activeBg) === item.id;
+                let actionBtn = isActive ? `<button class="btn-shop-action btn-active-skin">PASANG</button>` : (isOwned ? `<button class="btn-shop-action btn-equip" onclick="equipItem('${currentShopTab}', '${item.id}')">USE</button>` : `<button class="btn-shop-action btn-buy" onclick="buyItem('${currentShopTab}', '${item.id}', ${item.price})">BELI</button>`);
+                container.innerHTML += `<div class="shop-item"><div class="shop-item-info"><span class="shop-item-title">${item.name}</span><span class="shop-item-desc">${item.desc}</span>${!isOwned ? `<span class="shop-item-price">🪙 ${item.price} Pts</span>` : '<span class="shop-item-price" style="color:#22c55e;">Milik Anda</span>'}</div><div>${actionBtn}</div></div>`;
+            });
+        }
+
+        function buyItem(type, id, price) {
+            if (player.points < price) return alert("Poin Anda tidak mencukupi!");
+            player.points -= price;
+            if (type === 'skin') player.ownedSkins.push(id); else player.ownedBgs.push(id);
+            db.ref('players/' + player.username).update({ points: player.points, ownedSkins: player.ownedSkins, ownedBgs: player.ownedBgs });
+            document.getElementById('shop-wallet-display').innerText = player.points.toLocaleString('id-ID'); syncUI(); renderShopItems();
+        }
+
+        function equipItem(type, id) {
+            if (type === 'skin') { player.activeSkin = id; db.ref('players/' + player.username).update({ activeSkin: id }); } else { player.activeBg = id; db.ref('players/' + player.username).update({ activeBg: id }); }
+            applyEquippedSkins(); renderShopItems();
+        }
+
+        function applyEquippedSkins() {
+            if (!player) return;
+            const s = shopSkins.find(s => s.id === player.activeSkin) || shopSkins[0];
+            document.documentElement.style.setProperty('--tile-x-color', s.xColor); document.documentElement.style.setProperty('--tile-x-shadow', s.xShadow);
+            document.documentElement.style.setProperty('--tile-o-color', s.oColor); document.documentElement.style.setProperty('--tile-o-shadow', s.oShadow);
+            const b = shopBgs.find(b => b.id === player.activeBg) || shopBgs[0]; document.body.style.background = b.css;
+        }
+
+        function startSoloMode() { 
+            vsAI = true; side = 'X'; aiBoard = Array(9).fill(""); matchEnded = false; 
+            db.ref('players/' + player.username).update({ status: 'playing' }); nav('scr-game'); document.getElementById('social-tools').style.display = 'none'; 
+            const currentBgObj = shopBgs.find(b => b.id === player.activeBg) || shopBgs[0];
+            document.getElementById('bg-owner-info').innerText = `Background: ${currentBgObj.name} (Milik Anda)`;
+            updateTilesUI(Array(9).fill(""), {}, 'skin_default', 'skin_default'); renderBoard(aiBoard, 'X'); 
+        }
+        
+        function createRoom() { 
+            vsAI = false; roomCode = Math.floor(10000 + Math.random() * 90000).toString(); side = 'X'; matchEnded = false; 
+            db.ref('rooms/' + roomCode).set({ board: Array(9).fill(""), turn: 'X', status: 'wait', p1: player.username, p1Skin: player.activeSkin, p1Bg: player.activeBg, p1Name: player.name, history: [] }); 
+            document.getElementById('room-id-val').innerText = roomCode; nav('scr-waiting'); renderLobbyFriends(); listenRoom(); 
+        }
+        
+        function processJoin() { 
+            const id = document.getElementById('join-code').value; 
+            db.ref('rooms/' + id).once('value', snap => { 
+                if(snap.exists() && snap.val().status === 'wait') { 
+                    roomCode = id; side = 'O'; vsAI = false; matchEnded = false; 
+                    db.ref('rooms/' + id).update({ status: 'play', p2: player.username, p2Skin: player.activeSkin, p2Bg: player.activeBg, p2Name: player.name }); 
+                    db.ref('players/' + player.username).update({ status: 'playing' }); listenRoom(); 
+                } else alert("Room Not Available!"); 
+            }); 
+        }
+        
+        function listenRoom() { 
+            db.ref('rooms/' + roomCode).on('value', snap => { 
+                const d = snap.val(); if(!d) return; 
+                if(d.status === 'quit') { alert("Opponent Left"); resetGameSession(); return; } 
+                if(d.status === 'play' || d.status === 'done') { 
+                    nav('scr-game'); document.getElementById('social-tools').style.display = 'block'; 
+                    const bg1 = shopBgs.find(b => b.id === d.p1Bg) || shopBgs[0]; const bg2 = shopBgs.find(b => b.id === d.p2Bg) || shopBgs[0];
+                    let chosenBg = bg1; let ownerName = d.p1Name || d.p1;
+                    if (bg2.price > bg1.price) { chosenBg = bg2; ownerName = d.p2Name || d.p2; }
+                    document.body.style.background = chosenBg.css; document.getElementById('bg-owner-info').innerText = `Room Bg: ${chosenBg.name} (Milik ${ownerName})`;
+                    updateTilesUI(d.board, d.history || {}, d.p1Skin, d.p2Skin); renderChats(d.chats); 
+                    if(d.status === 'play') { document.getElementById('overlay-result').style.display = 'none'; matchEnded = false; isTurn = (d.turn === side); document.getElementById('game-info').innerText = isTurn ? "YOUR TURN" : "WAITING..."; } 
+                    const win = checkWin(d.board); if(win && !matchEnded) finish(win); 
+                } 
+                if(d.rematch && d.rematch !== side) document.getElementById('rematch-status').innerText = "Opponent wants a rematch!"; 
+            }); 
+        }
+        
+        function updateTilesUI(b, tileOwners, p1SkinId, p2SkinId) { 
+            const tiles = document.querySelectorAll('.tile'); 
+            const s1 = shopSkins.find(s => s.id === p1SkinId) || shopSkins[0]; const s2 = shopSkins.find(s => s.id === p2SkinId) || shopSkins[0];
+            b.forEach((v, i) => { 
+                tiles[i].innerText = v; tiles[i].style.color = ''; tiles[i].style.textShadow = '';
+                if(v !== "") {
+                    const owner = tileOwners[i]; 
+                    if(owner === 'p1') { tiles[i].style.color = (v === 'X') ? s1.xColor : s1.oColor; tiles[i].style.textShadow = `0 0 15px ${(v === 'X') ? s1.xShadow : s1.oShadow}`; } 
+                    else if(owner === 'p2') { tiles[i].style.color = (v === 'X') ? s2.xColor : s2.oColor; tiles[i].style.textShadow = `0 0 15px ${(v === 'X') ? s2.xShadow : s2.oShadow}`; } 
+                    else { const fallbackSkin = shopSkins.find(s => s.id === player.activeSkin) || shopSkins[0]; tiles[i].style.color = (v === 'X') ? fallbackSkin.xColor : fallbackSkin.oColor; tiles[i].style.textShadow = `0 0 15px ${(v === 'X') ? fallbackSkin.xShadow : fallbackSkin.oShadow}`; }
+                }
+            }); 
+        }
+        
+        function renderBoard(b, t) { 
+            updateTilesUI(b, {}, player.activeSkin, player.activeSkin); 
+            const win = checkWin(b); if(win && !matchEnded) { finish(win); return; } 
+            if(vsAI && t === 'O' && !win) { document.getElementById('game-info').innerText = "AI THINKING..."; aiPlay(); isTurn = false; } else { isTurn = (t === side); document.getElementById('game-info').innerText = isTurn ? "YOUR TURN" : "OPPONENT..."; } 
+        }
+        
+        function makeMove(i) { 
+            if(!isTurn || matchEnded) return; 
+            if(vsAI) { if(aiBoard[i]==="") { aiBoard[i]='X'; if(checkWin(aiBoard)) { renderBoard(aiBoard, 'O'); return; } renderBoard(aiBoard, 'O'); } } 
+            else { 
+                db.ref('rooms/' + roomCode).once('value', snap => { 
+                    let roomData = snap.val(); let b = roomData.board; let historyLog = roomData.history || {};
+                    if(b[i]==="") { 
+                        b[i]=side; const identity = (side === 'X') ? 'p1' : 'p2'; historyLog[i] = identity; 
+                        const winNow = checkWin(b); db.ref('rooms/' + roomCode).update({ board: b, turn: side==='X'?'O':'X', history: historyLog }); if(winNow) finish(winNow); 
+                    } 
+                }); 
+            } 
+        }
+        
+        function aiPlay() { setTimeout(() => { let moves = []; for (let i = 0; i < 9; i++) if (aiBoard[i] === "") moves.push(i); let move = moves[Math.floor(Math.random()*moves.length)]; if(move !== undefined) { aiBoard[move] = 'O'; renderBoard(aiBoard, 'X'); } }, 600); }
+        
+        function finish(w) { 
+            if(matchEnded) return; matchEnded = true; document.getElementById('overlay-result').style.display = 'flex'; 
+            let xp = w === "Draw" ? 25 : (w === side ? 60 : 15); let pts = w === "Draw" ? 40 : (w === side ? 100 : 20);
+            document.getElementById('win-status').innerText = w === "Draw" ? "DRAW!" : (w === side ? "YOU WIN!" : "YOU LOSE!"); 
+            document.getElementById('reward-exp').innerText = `+${xp} XP`; document.getElementById('reward-points').innerText = `+🪙 ${pts} Points`; 
+            updateGameRewards(xp, pts); if(!vsAI) db.ref('rooms/' + roomCode).update({ status: 'done' }); 
+        }
+
+        function requestRematch() { db.ref('rooms/' + roomCode).once('value', snap => { let d = snap.val(); if(d.rematch && d.rematch !== side) { db.ref('rooms/' + roomCode).update({ board: Array(9).fill(""), turn: 'X', status: 'play', rematch: null, history: {} }); } else { db.ref('rooms/' + roomCode).update({ rematch: side }); document.getElementById('rematch-status').innerText = "Waiting..."; } }); }
+        function exitRoomAction() { if(!vsAI) db.ref('rooms/' + roomCode).update({ status: 'quit' }); resetGameSession(); }
+        function resetGameSession() { if(!vsAI) db.ref('rooms/' + roomCode).off(); document.getElementById('overlay-result').style.display = 'none'; db.ref('players/' + player.username).update({ status: 'lobby' }); nav('scr-home'); matchEnded = false; }
+        
+        function updateGameRewards(xpAmt, ptsAmt) { if(player.username === 'fathurrizamreal') { player.points = 9000000; } else { player.points += ptsAmt; } player.exp += xpAmt; while(player.exp >= 100) { player.lv++; player.exp -= 100; } db.ref('players/' + player.username).update({ lv: player.lv, exp: player.exp, points: player.points, status: 'lobby' }); syncUI(); }
+        function checkWin(b) { const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let l of lines) if(b[l[0]] && b[l[0]]==b[l[1]] && b[l[0]]==b[l[2]]) return b[l[0]]; return b.includes("") ? null : "Draw"; }
+        function sendChat() { const m = document.getElementById('chat-in').value; if(!m) return; db.ref('rooms/' + roomCode + '/chats').push({ n: player.name, t: m }); document.getElementById('chat-in').value = ''; }
+        function sticker(s) { db.ref('rooms/' + roomCode + '/chats').push({ n: player.name, t: s }); }
+        function renderChats(c) { const l = document.getElementById('chat-content'); l.innerHTML = ''; if(c) Object.values(c).forEach(m => { l.innerHTML += `<div><b>${m.n}:</b> ${m.t}</div>`; }); l.scrollTop = l.scrollHeight; }
+        function copyInviteLink() { navigator.clipboard.writeText(roomCode); event.target.innerText = "COPIED!"; setTimeout(() => event.target.innerText = "COPY CODE", 2000); }
+    </script>
+</body>
+</html>
